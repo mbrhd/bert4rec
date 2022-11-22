@@ -74,10 +74,13 @@ import tensorflow as tf
 #         self.acc_metric.update_state(y, y_pred)
 #         return {"loss": loss, "accuracy": self.acc_metric.result()}
 
+
 class BertTrainer(tf.keras.Model):
     def __init__(self, model):
         super(BertTrainer, self).__init__()
         self.model = model
+        self.acc_metric = tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
 
     def compile(self, optimizer, loss):
         super(BertTrainer, self).compile()
@@ -93,9 +96,7 @@ class BertTrainer(tf.keras.Model):
 
         with tf.GradientTape() as tape:
             predictions = self.model(x_masked_tokens, training=True)
-            loss = self.loss(
-                y_masked_tokens, predictions, sample_weight=masked_layer
-            )
+            loss = self.loss(y_masked_tokens, predictions, sample_weight=masked_layer)
 
         # Compute gradients
         trainable_vars = self.trainable_variables
@@ -106,9 +107,15 @@ class BertTrainer(tf.keras.Model):
 
         # Compute our own metrics
         self.loss_tracker.update_state(loss, masked_layer=masked_layer)
+        self.acc_metric.update_state(
+            y_masked_tokens, predictions, sample_weight=masked_layer
+        )
 
         # Return a dict mapping metric names to current value
-        return {"loss": self.loss_tracker.result(), "accuracy": self.acc_metric.result()}
+        return {
+            "loss": self.loss_tracker.result(),
+            "accuracy": self.acc_metric.result(),
+        }
 
     def test_step(self, inputs):
         if len(inputs) == 3:
@@ -119,18 +126,19 @@ class BertTrainer(tf.keras.Model):
 
         predictions = self.model(x_masked_tokens, training=False)
         loss = self.loss(x_masked_tokens, predictions, sample_weight=masked_layer)
-        acc_metric = self.acc_metric(y_masked_tokens, predictions, sample_weight=masked_layer)
+        acc_metric = self.acc_metric(
+            y_masked_tokens, predictions, sample_weight=masked_layer
+        )
         return {"loss": loss.result(), "accuracy": acc_metric.result()}
 
-    @property
-    def metrics(self):
-        # We list our `Metric` objects here so that `reset_states()` can be
-        # called automatically at the start of each epoch
-        # or at the start of `evaluate()`.
-        # If you don't implement this property, you have to call
-        # `reset_states()` yourself at the time of your choosing.
-        return [self.loss_tracker, self.acc_metric]
+    # @property
+    # def metrics(self):
+    #     # We list our `Metric` objects here so that `reset_states()` can be
+    #     # called automatically at the start of each epoch
+    #     # or at the start of `evaluate()`.
+    #     # If you don't implement this property, you have to call
+    #     # `reset_states()` yourself at the time of your choosing.
+    #     return [self.loss_tracker, self.acc_metric]
 
     def call(self, inputs):
         return self.model(inputs)
-

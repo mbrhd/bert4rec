@@ -27,14 +27,12 @@ class TransformerEncoderLayer(tf.keras.layers.Layer):
             feed_forward_size (Optional[int], optional): hidden size of the feed forward layer. Defaults to None.
         """
         super().__init__()
-        self.d_model = d_model
         self.feed_forward_size = feed_forward_size
-        attention_head_size = d_model // num_heads
         self.dropout = dropout
+        key_value_dim = d_model // num_heads
         self.self_attention = tf.keras.layers.MultiHeadAttention(
             num_heads=num_heads,
-            key_dim=attention_head_size,
-            value_dim=attention_head_size,
+            key_dim=key_value_dim,
             dropout=dropout,
         )
         self.add = tf.keras.layers.Add()
@@ -42,7 +40,7 @@ class TransformerEncoderLayer(tf.keras.layers.Layer):
             epsilon=layer_norm_eps
         )
         self.feed_forward_layer = FeedForward(
-            d_model=self.d_model,
+            d_model=d_model,
             feed_forward_size=self.feed_forward_size,
             activation_string=activation,
             dropout_rate=dropout,
