@@ -60,8 +60,7 @@ class BertModel(tf.keras.Model):
 
     def call(self, x):
         # `x` is token-IDs shape: (batch, seq_len)
-        inputs = tf.keras.layers.Input((self.max_seq_len), dtype=tf.int64)
-        x = self.embeddings(inputs)  # Shape `(batch_size, seq_len, d_model)`.
+        x = self.embeddings(x)  # Shape `(batch_size, seq_len, d_model)`.
         x = self.embeddings_layer_norm(x)
 
         # Add dropout.
