@@ -36,9 +36,6 @@ class BertModel(tf.keras.Model):
             vocab_size=self.vocab_size,
             max_seq_len=self.max_seq_len,
         )
-        # self.embeddings_layer_norm = tf.keras.layers.LayerNormalization(
-        #     epsilon=self.layer_norm_eps
-        # )
         self.enc_layers = [
             TransformerEncoderLayer(
                 num_heads=self.num_heads,
@@ -63,7 +60,6 @@ class BertModel(tf.keras.Model):
         output_embeddings = self.embeddings(
             x
         )  # Shape `(batch_size, seq_len, d_model)`.
-        # x = self.embeddings_layer_norm(x)
 
         # Add dropout.
         query = self.dropout(output_embeddings)
