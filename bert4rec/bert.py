@@ -19,6 +19,7 @@ class BertModel(tf.keras.Model):
         feed_forward_size: Optional[int] = None,
         vocab_size: int = 40857,
         max_seq_len: int = 256,
+        training:bool = False,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -30,6 +31,7 @@ class BertModel(tf.keras.Model):
         self.feed_forward_size = feed_forward_size
         self.vocab_size = vocab_size
         self.max_seq_len = max_seq_len
+        self.training = training
 
         self.embeddings = PositionalEmbedding(
             d_model=self.d_model,
@@ -65,7 +67,7 @@ class BertModel(tf.keras.Model):
         query = self.dropout(output_embeddings)
 
         for i in range(self.num_layers):
-            query = self.enc_layers[i](query)
+            query = self.enc_layers[i](query, training=self.training)
 
         y = self.output1(query)
         output = self.output2(y)
