@@ -64,7 +64,11 @@ class TransformerEncoderLayer(tf.keras.layers.Layer):
         """
         # self attention
         self_attention_output = self.self_attention(
-            query=x, value=x, key=x, attention_mask=attention_mask, training=training
+            query=x,
+            value=x,
+            key=x,
+            attention_mask=attention_mask,
+            training=training,
         )
         self_attention_output = tf.keras.layers.Dropout(self.dropout)(
             self_attention_output, training=training

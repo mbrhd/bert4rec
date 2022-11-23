@@ -60,16 +60,18 @@ class BertModel(tf.keras.Model):
 
     def call(self, x):
         # `x` is token-IDs shape: (batch, seq_len)
-        x = self.embeddings(x)  # Shape `(batch_size, seq_len, d_model)`.
+        output_embeddings = self.embeddings(
+            x
+        )  # Shape `(batch_size, seq_len, d_model)`.
         # x = self.embeddings_layer_norm(x)
 
         # Add dropout.
-        # x = self.dropout(x)
+        query = self.dropout(output_embeddings)
 
         for i in range(self.num_layers):
-            x = self.enc_layers[i](x)
+            query = self.enc_layers[i](query)
 
-        x = self.output1(x)
-        x = self.output2(x)
+        y = self.output1(query)
+        output = self.output2(y)
 
-        return x  # Shape `(batch_size, seq_len, vocab_size)`.
+        return output  # Shape `(batch_size, seq_len, vocab_size)`.

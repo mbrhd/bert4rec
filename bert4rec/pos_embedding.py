@@ -20,7 +20,7 @@ class PositionalEmbedding(tf.keras.layers.Layer):
         self.vocab_size = vocab_size
         self.max_seq_len = max_seq_len
         self.embedding = tf.keras.layers.Embedding(
-            input_dim=self.vocab_size,
+            input_dim=self.vocab_size + 1,
             output_dim=self.d_model,
             input_length=self.max_seq_len,
             mask_zero=True,
@@ -29,7 +29,7 @@ class PositionalEmbedding(tf.keras.layers.Layer):
             input_dim=self.max_seq_len,
             output_dim=self.d_model,
             input_length=self.max_seq_len,
-            mask_zero=True
+            mask_zero=False,
         )
 
     def compute_mask(self, *args, **kwargs):
@@ -37,5 +37,5 @@ class PositionalEmbedding(tf.keras.layers.Layer):
 
     def call(self, x):
         embed = self.embedding(x)
-        position = self.pos_encoding(x)
+        position = self.pos_encoding(tf.range(start=0, limit=self.max_seq_len, delta=1))
         return embed + position
