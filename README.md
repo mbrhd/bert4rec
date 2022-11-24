@@ -1,8 +1,8 @@
 # How to use the repo
 ## Steps to get started:
 1 - Create an  environment:
-    - Option 1: you can just run the makefile to generate the env. The makefile supports both conda and virtualenv
-    - Option 2: create your environment with your own python environment manager. 
+  * Option 1: you can just run the makefile to generate the env. The makefile supports both conda and virtualenv
+  * Option 2: create your environment with your own python environment manager. 
 
 2 - Activate your python environment 
 ```
