@@ -229,47 +229,38 @@ class DataLoader(object):
     def __init__(
         self,
         input_file_path,
-        is_training: bool = True,
-        batch_size: int = 32,
+        batch_size: int = 64,
         max_seq_length: int = 200,
     ):
         self.input_file_path = input_file_path
-        is_training = is_training
         self.batch_size = batch_size
         self.max_seq_length = max_seq_length
 
-    def build_input_function(self, num_cpu_threads=4):
-        """Creates an `input_fn` closure to be passed to TPUEstimator."""
+    def __parse_tf_records(self, element):
+        # Parse the input `tf.train.Example` proto using the dictionary schema.
+        schema = {
+            "info": tf.io.FixedLenFeature([1], tf.int64),  # [user]
+            "x_masked_tokens": tf.io.FixedLenFeature([self.max_seq_length], tf.int64),
+            "y_tokens": tf.io.FixedLenFeature([self.max_seq_length], tf.int64),
+            "mask_layer": tf.io.FixedLenFeature([self.max_seq_length], tf.int64),
+        }
+        content = tf.io.parse_single_example(element, schema)
+        return content
 
-        def input_fn(self):
-            """The actual input function."""
+    def to_tf_dataset(self):
+        dataset = tf.data.TFRecordDataset(self.input_file_path)
+        dataset = dataset.map(self.__parse_tf_records)
+        df_dataset = pd.DataFrame(
+            dataset.as_numpy_iterator(),
+            columns=['info', 'x_masked_tokens', 'y_tokens', 'mask_layer']
+        )
+        movies_ds = tf.data.Dataset.from_tensor_slices(
+            (np.vstack(df_dataset.x_masked_tokens.to_numpy()),
+            np.vstack(df_dataset.y_tokens.to_numpy()),
+            np.vstack(df_dataset.mask_layer.to_numpy()))
+        )
+        return movies_ds.shuffle(1000).batch(self.batch_size)
 
-            name_to_features = {
-                "info": tf.io.FixedLenFeature([1], tf.int64),  # [user]
-                "x_masked_tokens": tf.io.FixedLenFeature(
-                    [self.max_seq_length], tf.int64
-                ),
-                "y_tokens": tf.io.FixedLenFeature([self.max_seq_length], tf.int64),
-                "mask_layer": tf.io.FixedLenFeature([], tf.int64),
-            }
-
-            # For training, we want a lot of parallel reading and shuffling.
-            # For eval, we want no shuffling and parallel reading doesn't matter.
-            if self.is_training:
-                dataset = tf.data.TFRecordDataset(self.input_file_path)
-                dataset = dataset.repeat()
-                dataset = dataset.shuffle(buffer_size=100)
-            else:
-                dataset = tf.data.TFRecordDataset(self.input_file_path)
-
-            dataset = dataset.map(
-                lambda record: self._decode_record(record, name_to_features),
-                num_parallel_calls=num_cpu_threads,
-            )
-            dataset = dataset.batch(batch_size=self.batch_size)
-            return dataset
-
-        return input_fn
 
 
 if __name__ == "__main__":
