@@ -14,15 +14,11 @@ class BertTrainer(tf.keras.Model):
         self.loss = loss
 
     def train_step(self, inputs):
-        if len(inputs) == 3:
-            x_masked_tokens, y_masked_tokens, masked_layer = inputs
-        else:
-            x_masked_tokens, y_masked_tokens = inputs
-            masked_layer = None
+        x_masked_tokens, y_masked_tokens, masked_layer = inputs
 
         with tf.GradientTape() as tape:
             predictions = self.model(x_masked_tokens, training=True)
-            loss = self.loss(y_masked_tokens, predictions)
+            loss = self.loss(y_masked_tokens, predictions, sample_weight=masked_layer)
 
         # Compute gradients
         trainable_vars = self.trainable_variables
@@ -32,7 +28,7 @@ class BertTrainer(tf.keras.Model):
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
         # Compute our own metrics
-        self.loss_tracker.update_state(loss)
+        self.loss_tracker.update_state(loss, sample_weight=masked_layer)
         self.acc_metric.update_state(
             y_masked_tokens, predictions
         )
@@ -47,7 +43,7 @@ class BertTrainer(tf.keras.Model):
         x_masked_tokens, y_masked_tokens, masked_layer = inputs
 
         predictions = self.model(x_masked_tokens, training=False)
-        loss = self.loss(x_masked_tokens, predictions)
+        loss = self.loss(x_masked_tokens, predictions, sample_weight=masked_layer)
         acc_metric = self.acc_metric.update_state(
             y_masked_tokens, predictions
         )
