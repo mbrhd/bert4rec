@@ -39,15 +39,17 @@ class BertTrainer(tf.keras.Model):
             "accuracy": self.acc_metric.result(),
         }
 
-    def test_step(self, inputs):
-        x_masked_tokens, y_masked_tokens, masked_layer = inputs
+    # def test_step(self, inputs):
+    #     x_masked_tokens, y_masked_tokens, masked_layer = inputs
 
-        predictions = self.model(x_masked_tokens, training=False)
-        loss = self.loss(x_masked_tokens, predictions, sample_weight=masked_layer)
-        acc_metric = self.acc_metric.update_state(
-            y_masked_tokens, predictions
-        )
-        return {"loss": loss, "accuracy": acc_metric.result()}
+    #     predictions = self.model(x_masked_tokens, training=False)
+
+
+    #     loss = self.loss(x_masked_tokens, predictions, sample_weight=masked_layer)
+    #     acc_metric = self.acc_metric.update_state(
+    #         y_masked_tokens, predictions
+    #     )
+    #     return {"loss": loss, "accuracy": acc_metric.result()}
 
     # @property
     # def metrics(self):
