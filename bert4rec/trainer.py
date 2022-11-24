@@ -22,7 +22,7 @@ class BertTrainer(tf.keras.Model):
 
         with tf.GradientTape() as tape:
             predictions = self.model(x_masked_tokens, training=True)
-            loss = self.loss(y_masked_tokens, predictions, sample_weight=masked_layer)
+            loss = self.loss(y_masked_tokens, predictions)
 
         # Compute gradients
         trainable_vars = self.trainable_variables
@@ -32,9 +32,9 @@ class BertTrainer(tf.keras.Model):
         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
 
         # Compute our own metrics
-        self.loss_tracker.update_state(loss, sample_weight=masked_layer)
+        self.loss_tracker.update_state(loss)
         self.acc_metric.update_state(
-            y_masked_tokens, predictions, sample_weight=masked_layer
+            y_masked_tokens, predictions
         )
 
         # Return a dict mapping metric names to current value
@@ -47,11 +47,11 @@ class BertTrainer(tf.keras.Model):
         x_masked_tokens, y_masked_tokens, masked_layer = inputs
 
         predictions = self.model(x_masked_tokens, training=False)
-        loss = self.loss(x_masked_tokens, predictions, sample_weight=masked_layer)
-        acc_metric = self.acc_metric(
-            y_masked_tokens, predictions, sample_weight=masked_layer
+        loss = self.loss(x_masked_tokens, predictions)
+        acc_metric = self.acc_metric.update_state(
+            y_masked_tokens, predictions
         )
-        return {"loss": loss.result(), "accuracy": acc_metric.result()}
+        return {"loss": loss, "accuracy": acc_metric.result()}
 
     # @property
     # def metrics(self):
